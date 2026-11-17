@@ -11,12 +11,12 @@ escriben antes del código, y cada requisito se verifica con pruebas automatizad
 
 ## Estado
 
-| Funcionalidad                                                               | Requisitos           | Estado    |
-| --------------------------------------------------------------------------- | -------------------- | --------- |
-| API de registro de postulaciones (validación, PDF, 5 MB)                    | RF-01, RF-03, RF-04  | Hecho     |
-| Inicio y cierre de sesión de analistas                                      | RF-05                | Hecho     |
-| API del panel: listar, filtrar, detalle, decisión, bitácora, descarga de CV | RF-06 a RF-11        | Hecho     |
-| Frontend: formulario y panel                                                | RF-02, RF-06 a RF-09 | Pendiente |
+| Funcionalidad                                                               | Requisitos           | Estado |
+| --------------------------------------------------------------------------- | -------------------- | ------ |
+| API de registro de postulaciones (validación, PDF, 5 MB)                    | RF-01, RF-03, RF-04  | Hecho  |
+| Inicio y cierre de sesión de analistas                                      | RF-05                | Hecho  |
+| API del panel: listar, filtrar, detalle, decisión, bitácora, descarga de CV | RF-06 a RF-11        | Hecho  |
+| Frontend: formulario, inicio de sesión y panel                              | RF-02, RF-05 a RF-11 | Hecho  |
 
 ## Requisitos previos
 
@@ -38,8 +38,13 @@ npm run seed   # crea el analista de prueba (ver abajo)
 npm run dev
 ```
 
-El servidor queda disponible en **http://localhost:3000** y se reinicia solo al cambiar el código.
-Para ejecutarlo sin recarga automática: `npm start`.
+El servidor se reinicia solo al cambiar el código (para ejecutarlo sin recarga: `npm start`).
+
+| Página                           | Para quién                                       |
+| -------------------------------- | ------------------------------------------------ |
+| http://localhost:3000            | Practicantes: formulario de postulación          |
+| http://localhost:3000/login.html | Analistas: inicio de sesión (usuario del seed)   |
+| http://localhost:3000/panel.html | Analistas: lista, filtro, detalle, decisión y CV |
 
 ### Usuario analista
 
@@ -50,7 +55,7 @@ Para ejecutarlo sin recarga automática: `npm start`.
 
 Puedes volver a ejecutar `npm run seed` en cualquier momento para cambiar la contraseña.
 
-### Probar la API
+### Probar la API directamente
 
 Registrar una postulación (reemplaza la ruta por la de un PDF real):
 
@@ -143,6 +148,9 @@ Para reiniciar los datos locales, detén el servidor y borra las carpetas `data/
 docs/
   requisitos.md     Requisitos funcionales y no funcionales, criterios de aceptación y trazabilidad
   openapi.yaml      Contrato de la API (el servidor valida cada petición y respuesta contra él)
+public/             Frontend sin framework (HTML, CSS y JavaScript)
+  js/validation.js  Reglas de validación del formulario, las mismas del servidor
+  js/dom.js         Creación segura de elementos (texto, nunca HTML)
 src/
   app.js            Construcción de la app y conexión de dependencias
   server.js         Punto de entrada
