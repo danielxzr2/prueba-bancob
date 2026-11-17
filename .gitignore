@@ -22,3 +22,6 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
+
+# Cookies del ejemplo con curl del README
+cookies.txt

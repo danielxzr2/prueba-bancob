@@ -14,8 +14,8 @@ escriben antes del código, y cada requisito se verifica con pruebas automatizad
 | Funcionalidad                                            | Requisitos           | Estado      |
 | -------------------------------------------------------- | -------------------- | ----------- |
 | API de registro de postulaciones (validación, PDF, 5 MB) | RF-01, RF-03, RF-04  | Hecho       |
-| Inicio de sesión de analistas                            | RF-05                | En progreso |
-| API del panel: listar, detalle, decisión, descarga de CV | RF-06 a RF-10        | Pendiente   |
+| Inicio y cierre de sesión de analistas                   | RF-05                | Hecho       |
+| API del panel: listar, detalle, decisión, descarga de CV | RF-06 a RF-10        | En progreso |
 | Frontend: formulario y panel                             | RF-02, RF-06 a RF-09 | Pendiente   |
 
 ## Requisitos previos
@@ -34,11 +34,21 @@ No se necesita ninguna base de datos ni servicio externo: SQLite se crea automá
 git clone https://github.com/danielxzr2/prueba-bancob.git
 cd prueba-bancob
 npm install
+npm run seed   # crea el analista de prueba (ver abajo)
 npm run dev
 ```
 
 El servidor queda disponible en **http://localhost:3000** y se reinicia solo al cambiar el código.
 Para ejecutarlo sin recarga automática: `npm start`.
+
+### Usuario analista
+
+`npm run seed` crea el usuario **`analista`**. En el repositorio no hay ninguna contraseña escrita:
+
+- Si defines `ANALYST_PASSWORD` en `.env`, se usa esa contraseña.
+- Si no, el comando **genera una aleatoria y la muestra una sola vez** en la consola.
+
+Puedes volver a ejecutar `npm run seed` en cualquier momento para cambiar la contraseña.
 
 ### Probar la API
 
@@ -61,6 +71,18 @@ Respuesta esperada (`201 Created`):
 ```
 
 Si algún dato es inválido, la API responde `400` con el detalle de **todos** los campos con error.
+
+Iniciar sesión como analista (guarda la cookie de sesión en `cookies.txt`):
+
+```bash
+curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "analista", "password": "<contraseña del seed>"}'
+
+curl -b cookies.txt http://localhost:3000/api/auth/me      # {"username":"analista"}
+curl -b cookies.txt -X POST http://localhost:3000/api/auth/logout
+```
+
 La especificación completa de la API está en [`docs/openapi.yaml`](docs/openapi.yaml).
 
 ## Pruebas y calidad
@@ -79,11 +101,14 @@ GitHub Actions ejecuta lint, formato y pruebas en cada push a `main`.
 
 Todo funciona sin configuración. Para cambiar algún valor, copia `.env.example` como `.env`:
 
-| Variable        | Por defecto       | Descripción                                        |
-| --------------- | ----------------- | -------------------------------------------------- |
-| `PORT`          | `3000`            | Puerto del servidor                                |
-| `DATABASE_PATH` | `data/app.sqlite` | Archivo de la base de datos SQLite                 |
-| `UPLOADS_DIR`   | `uploads`         | Carpeta privada donde se guardan las hojas de vida |
+| Variable           | Por defecto                | Descripción                                                                   |
+| ------------------ | -------------------------- | ----------------------------------------------------------------------------- |
+| `PORT`             | `3000`                     | Puerto del servidor                                                           |
+| `DATABASE_PATH`    | `data/app.sqlite`          | Archivo de la base de datos SQLite                                            |
+| `UPLOADS_DIR`      | `uploads`                  | Carpeta privada donde se guardan las hojas de vida                            |
+| `SESSION_SECRET`   | aleatorio en cada arranque | Secreto de la cookie de sesión. Sin él, las sesiones se cierran al reiniciar. |
+| `ANALYST_USERNAME` | `analista`                 | Usuario que crea `npm run seed`                                               |
+| `ANALYST_PASSWORD` | aleatoria                  | Contraseña que asigna `npm run seed` (mínimo 8 caracteres)                    |
 
 Para reiniciar los datos locales, detén el servidor y borra las carpetas `data/` y `uploads/`.
 
@@ -100,7 +125,9 @@ src/
   services/         Reglas de negocio y almacenamiento de archivos
   repositories/     Acceso a datos (consultas parametrizadas)
   db/               Esquema SQLite
-  middleware/       Manejo de errores
+  middleware/       Manejo de errores y protección de rutas (sesión)
+scripts/
+  seed.js           Crea o actualiza el analista de prueba
 tests/
   unit/             Pruebas de servicios y utilidades
   integration/      Pruebas de la API de extremo a extremo con Supertest
