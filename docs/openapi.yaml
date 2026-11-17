@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Plataforma de Selección de Practicantes — API
+  version: 0.1.0
+  description: |
+    **Contrato prescriptivo.** Este documento se escribe antes que las rutas y el servidor
+    valida cada petición contra él (RNF-12). Para cambiar la API, primero se cambia este archivo.
+
+    Cada operación declara en `x-requisitos` los requisitos de `docs/requisitos.md` que implementa.
+
+    **Autenticación:** sesión en una cookie `sid` (`HttpOnly`, `SameSite=Strict`) emitida por
+    `POST /api/auth/login`. `SameSite=Strict` mitiga CSRF para este alcance (uso local, mismo origen).
+
+    **Errores:** todas las respuestas de error usan el esquema `Error` (RNF-15).
+
+servers:
+  - url: http://localhost:3000
+    description: Ejecución local
+
+tags:
+  - name: Practicantes (público)
+    description: Registro de postulaciones, sin autenticación.
+  - name: Autenticación
+    description: Sesión de analistas.
+  - name: Panel de analista
+    description: Requiere sesión de analista.
+
+paths:
+  /api/applicants:
+    post:
+      tags: [Practicantes (público)]
+      operationId: registerApplicant
+      summary: Registrar una postulación
+      x-requisitos: [RF-01, RF-03, RF-04, RNF-03, RNF-04, RNF-05, RNF-09]
+      description: |
+        Las reglas estructurales (tipos, longitudes, formato) las valida el contrato. Las reglas de
+        negocio (longitud después de eliminar espacios, firma `%PDF-` del archivo, correo único,
+        autorización aceptada) las valida el servicio. En ambos casos la respuesta es un `400` con
+        detalle por campo, y no se persiste ni el registro ni el archivo.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicantRegistration'
+            encoding:
+              cv:
+                contentType: application/pdf
+      responses:
+        '201':
+          description: Postulación registrada con estado `PENDIENTE`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationReceipt'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Ya existe una postulación con ese correo (CA-04.1).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: DUPLICATE_EMAIL
+                  message: Ya existe una postulación con este correo electrónico.
+        '413':
+          description: La hoja de vida supera los 5 MB (RNF-05).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: FILE_TOO_LARGE
+                  message: La hoja de vida no puede superar 5 MB.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags: [Panel de analista]
+      operationId: listApplicants
+      summary: Listar practicantes
+      x-requisitos: [RF-06, RF-11, RNF-02]
+      description: Ordenados por fecha de registro, del más reciente al más antiguo.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filtra por estado (RF-11).
+          schema:
+            $ref: '#/components/schemas/ApplicantStatus'
+      responses:
+        '200':
+          description: Lista de practicantes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicantSummary'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/applicants/{id}:
+    get:
+      tags: [Panel de analista]
+      operationId: getApplicant
+      summary: Ver el detalle de un practicante
+      x-requisitos: [RF-07, RNF-02]
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ApplicantId'
+      responses:
+        '200':
+          description: Detalle del practicante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Applicant'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/applicants/{id}/status:
+    put:
+      tags: [Panel de analista]
+      operationId: updateApplicantStatus
+      summary: Marcar como viable o no viable
+      x-requisitos: [RF-08, RF-10, RNF-02]
+      description: |
+        Establece la decisión del analista. Se puede corregir una decisión previa (CA-08.3).
+        Cada cambio efectivo genera un registro en la bitácora (RF-10). Si el estado enviado es
+        igual al actual, la operación es idempotente y no genera registro.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ApplicantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+      responses:
+        '200':
+          description: Estado actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Applicant'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/applicants/{id}/status-history:
+    get:
+      tags: [Panel de analista]
+      operationId: getApplicantStatusHistory
+      summary: Ver la bitácora de decisiones de un practicante
+      x-requisitos: [RF-10, RNF-02]
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ApplicantId'
+      responses:
+        '200':
+          description: Cambios de estado, del más reciente al más antiguo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatusChange'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/applicants/{id}/cv:
+    get:
+      tags: [Panel de analista]
+      operationId: downloadApplicantCv
+      summary: Descargar la hoja de vida
+      x-requisitos: [RF-09, RNF-02, RNF-03]
+      description: |
+        Única vía de acceso a los archivos (RNF-03). El nombre de descarga se deriva del nombre
+        del practicante, por ejemplo `CV-ana-maria-perez.pdf`.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ApplicantId'
+      responses:
+        '200':
+          description: Archivo PDF.
+          headers:
+            Content-Disposition:
+              description: '`attachment; filename="CV-<nombre>.pdf"`'
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/auth/login:
+    post:
+      tags: [Autenticación]
+      operationId: login
+      summary: Iniciar sesión como analista
+      x-requisitos: [RF-05, RNF-01]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesión iniciada. Se emite la cookie `sid`.
+          headers:
+            Set-Cookie:
+              description: '`sid=<id>; HttpOnly; SameSite=Strict; Path=/`'
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analyst'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: |
+            Credenciales inválidas. El mensaje es el mismo exista o no el usuario (CA-05.2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: INVALID_CREDENTIALS
+                  message: Usuario o contraseña incorrectos.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/auth/logout:
+    post:
+      tags: [Autenticación]
+      operationId: logout
+      summary: Cerrar sesión
+      x-requisitos: [RF-05]
+      security:
+        - sessionCookie: []
+      responses:
+        '204':
+          description: Sesión invalidada (CA-05.3).
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/me:
+    get:
+      tags: [Autenticación]
+      operationId: getCurrentAnalyst
+      summary: Consultar la sesión actual
+      x-requisitos: [RF-05]
+      description: Permite al frontend saber si hay sesión antes de mostrar el panel.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Analista autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analyst'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: sid
+
+  parameters:
+    ApplicantId:
+      name: id
+      in: path
+      required: true
+      description: Identificador del practicante.
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+    ApplicantStatus:
+      type: string
+      enum: [PENDIENTE, VIABLE, NO_VIABLE]
+      description: |
+        Estado del practicante. Los valores son términos del dominio y se mantienen en español,
+        igual que en `docs/requisitos.md` (sección 3).
+
+    Decision:
+      type: string
+      enum: [VIABLE, NO_VIABLE]
+      description: Estados que puede asignar un analista. `PENDIENTE` solo lo asigna el sistema.
+
+    ApplicantRegistration:
+      type: object
+      required: [fullName, email, career, semester, cv, dataConsent]
+      additionalProperties: false
+      properties:
+        fullName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: Ana María Pérez
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: ana.perez@example.com
+        career:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Ingeniería de Sistemas
+        semester:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 7
+        cv:
+          type: string
+          format: binary
+          description: Hoja de vida en PDF, máximo 5 MB (RNF-04, RNF-05).
+        dataConsent:
+          type: boolean
+          description: |
+            Autorización de tratamiento de datos personales (Ley 1581 de 2012). Debe ser `true`;
+            en caso contrario la postulación se rechaza (CA-01.3, RNF-09).
+
+    RegistrationReceipt:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ApplicantStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    ApplicantSummary:
+      type: object
+      required: [id, fullName, career, semester, status, createdAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        career:
+          type: string
+        semester:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ApplicantStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    Applicant:
+      allOf:
+        - $ref: '#/components/schemas/ApplicantSummary'
+        - type: object
+          required: [email, dataConsentAt, updatedAt]
+          properties:
+            email:
+              type: string
+              format: email
+            dataConsentAt:
+              type: string
+              format: date-time
+              description: Fecha y hora en que se aceptó la autorización de datos (RNF-09).
+            updatedAt:
+              type: string
+              format: date-time
+
+    StatusUpdate:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status:
+          $ref: '#/components/schemas/Decision'
+
+    StatusChange:
+      type: object
+      required: [id, previousStatus, newStatus, changedBy, changedAt]
+      properties:
+        id:
+          type: integer
+        previousStatus:
+          $ref: '#/components/schemas/ApplicantStatus'
+        newStatus:
+          $ref: '#/components/schemas/Decision'
+        changedBy:
+          type: string
+          description: Usuario del analista que tomó la decisión.
+        changedAt:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 50
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          format: password
+
+    Analyst:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Código estable, pensado para que lo interprete el frontend.
+              enum:
+                - VALIDATION_ERROR
+                - DUPLICATE_EMAIL
+                - FILE_TOO_LARGE
+                - INVALID_CREDENTIALS
+                - UNAUTHORIZED
+                - NOT_FOUND
+                - INTERNAL_ERROR
+            message:
+              type: string
+              description: Mensaje legible en español. Nunca incluye trazas internas (RNF-15).
+            details:
+              type: array
+              description: Errores por campo, cuando aplica.
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+  responses:
+    ValidationError:
+      description: La petición no cumple el contrato o las reglas de negocio.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: La solicitud tiene campos inválidos.
+              details:
+                - field: fullName
+                  message: El nombre completo es obligatorio.
+                - field: cv
+                  message: La hoja de vida debe ser un archivo PDF.
+    Unauthorized:
+      description: No hay una sesión de analista válida (RNF-02).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Debe iniciar sesión como analista.
+    NotFound:
+      description: El practicante no existe (CA-07.2).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Practicante no encontrado.
+    InternalError:
+      description: Error inesperado. No expone detalles internos (RNF-15).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Ocurrió un error inesperado.
