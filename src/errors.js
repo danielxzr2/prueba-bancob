@@ -29,6 +29,16 @@ const notFound = (message = 'Recurso no encontrado.') => new AppError(404, 'NOT_
 const unauthorized = (message = 'Debe iniciar sesión como analista.') =>
   new AppError(401, 'UNAUTHORIZED', message);
 
+const duplicateEmail = () =>
+  new AppError(409, 'DUPLICATE_EMAIL', 'Ya existe una postulación con este correo electrónico.');
+
 const internalError = () => new AppError(500, 'INTERNAL_ERROR', 'Ocurrió un error inesperado.');
 
-module.exports = { AppError, validationError, notFound, unauthorized, internalError };
+module.exports = {
+  AppError,
+  validationError,
+  notFound,
+  unauthorized,
+  duplicateEmail,
+  internalError,
+};

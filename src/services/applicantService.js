@@ -1,4 +1,13 @@
-const { validationError } = require('../errors');
+const { validationError, duplicateEmail } = require('../errors');
+const { isDuplicateEmailError } = require('../repositories/applicantRepository');
+
+// Every PDF starts with these bytes. The extension and the declared MIME type are
+// chosen by the client, so they prove nothing (RNF-04).
+const PDF_SIGNATURE = Buffer.from('%PDF-');
+
+function isPdf(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.subarray(0, PDF_SIGNATURE.length).equals(PDF_SIGNATURE);
+}
 
 const LIMITS = {
   fullName: { min: 3, max: 100 },
@@ -31,7 +40,7 @@ function checkLength(details, field, label, value) {
 
 /**
  * Business rules the contract cannot express (RF-03): lengths measured after
- * trimming, mandatory consent and a mandatory CV.
+ * trimming, mandatory consent and a mandatory CV whose content is really a PDF.
  * Returns the list of invalid fields; an empty list means the input is valid.
  */
 function validateRegistration(data, cvFile) {
@@ -46,6 +55,8 @@ function validateRegistration(data, cvFile) {
   }
   if (!cvFile) {
     details.push({ field: 'cv', message: 'La hoja de vida es obligatoria.' });
+  } else if (!isPdf(cvFile.buffer)) {
+    details.push({ field: 'cv', message: 'La hoja de vida debe ser un archivo PDF.' });
   }
   return details;
 }
@@ -61,6 +72,9 @@ function createApplicantService({ applicantRepository, fileStorage, now = () => 
       const details = validateRegistration(data, cvFile);
       if (details.length > 0) throw validationError(details);
 
+      // Checked before saving the file, so a duplicate never touches the disk (CA-04.1).
+      if (applicantRepository.existsByEmail(data.email)) throw duplicateEmail();
+
       const cvFileName = await fileStorage.savePdf(cvFile.buffer);
       try {
         return applicantRepository.create({
@@ -73,10 +87,12 @@ function createApplicantService({ applicantRepository, fileStorage, now = () => 
         });
       } catch (err) {
         await fileStorage.remove(cvFileName);
-        throw err;
+        // Two simultaneous registrations can both pass existsByEmail; the database
+        // UNIQUE constraint decides, and the loser gets the same 409.
+        throw isDuplicateEmailError(err) ? duplicateEmail() : err;
       }
     },
   };
 }
 
-module.exports = { createApplicantService, normalizeRegistration, validateRegistration };
+module.exports = { createApplicantService, normalizeRegistration, validateRegistration, isPdf };
