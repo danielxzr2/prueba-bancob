@@ -174,7 +174,7 @@ Cada requisito no funcional es **verificable**: se indica cómo se comprueba.
 
 Se completó durante el desarrollo. Cada fila enlaza el requisito con la prueba que lo verifica.
 
-Además de las pruebas automatizadas (`npm test`, 130 pruebas), `npm run test:e2e` recorre en un
+Además de las pruebas automatizadas (`npm test`, 132 pruebas), `npm run test:e2e` recorre en un
 navegador real (Firefox) los flujos de RF-01 a RF-11 y las verificaciones de RNF-02, RNF-07 y RNF-17.
 
 | Requisito | Prueba(s)                                                                                                                                                                                                                                                       | Estado   |

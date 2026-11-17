@@ -68,7 +68,7 @@ Puedes volver a ejecutar `npm run seed` en cualquier momento para cambiar la con
 ## Pruebas y calidad
 
 ```bash
-npm test               # 130 pruebas unitarias, de integración y de arquitectura (Jest + Supertest)
+npm test               # 132 pruebas unitarias, de integración y de arquitectura (Jest + Supertest)
 npm run test:coverage  # pruebas + reporte de cobertura en coverage/lcov-report/index.html
 npm run test:e2e       # 16 controles en un navegador real (requiere Firefox)
 npm run lint           # ESLint
@@ -133,15 +133,16 @@ línea, son mías. El proceso se diseñó para que los errores de la IA se detec
 
 **Errores que el proceso detectó**
 
-| Qué pasó                                                                                   | Cómo se detectó                       | Commit    |
-| ------------------------------------------------------------------------------------------ | ------------------------------------- | --------- |
-| Una prueba de correo único mezclaba dos casos y fallaba por otra razón                     | Al ejecutar la prueba                 | `812c170` |
-| Pruebas de validación pasaban por la razón equivocada (un error de tipo ocultaba la regla) | Mutación: desactivar `coerceTypes`    | `f719c06` |
-| La prueba de logout pasaba aunque la sesión seguía válida en el servidor                   | Mutación: quitar `session.destroy`    | `12ce398` |
-| La bitácora podía registrar al analista equivocado sin que fallara ninguna prueba          | Mutación: analista fijo               | `c1ee2a9` |
-| `npm run dev` fallaba si no existía `.env`                                                 | Siguiendo el README en un clon limpio | `7125fe8` |
-| ESLint aplicaba los globales de Node al código del navegador                               | Mutación: `require` en el frontend    | `6fcf57d` |
-| La columna "Ver detalle" quedaba oculta y la confirmación del registro, fuera de vista     | Revisando capturas del navegador      | `091379e` |
+| Qué pasó                                                                                                    | Cómo se detectó                                    | Commit    |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------- |
+| Una prueba de correo único mezclaba dos casos y fallaba por otra razón                                      | Al ejecutar la prueba                              | `812c170` |
+| Pruebas de validación pasaban por la razón equivocada (un error de tipo ocultaba la regla)                  | Mutación: desactivar `coerceTypes`                 | `f719c06` |
+| La prueba de logout pasaba aunque la sesión seguía válida en el servidor                                    | Mutación: quitar `session.destroy`                 | `12ce398` |
+| La bitácora podía registrar al analista equivocado sin que fallara ninguna prueba                           | Mutación: analista fijo                            | `c1ee2a9` |
+| `npm run dev` fallaba si no existía `.env`                                                                  | Siguiendo el README en un clon limpio              | `7125fe8` |
+| El servidor anunciaba "escuchando" aunque el puerto estuviera ocupado (Express 5 pasa el error al callback) | Probando el zip con otro proceso en el puerto 3000 | `b914740` |
+| ESLint aplicaba los globales de Node al código del navegador                                                | Mutación: `require` en el frontend                 | `6fcf57d` |
+| La columna "Ver detalle" quedaba oculta y la confirmación del registro, fuera de vista                      | Revisando capturas del navegador                   | `091379e` |
 
 **Uso descartado a propósito:** calificar hojas de vida automáticamente con IA. Hay riesgo de sesgo,
 implicaría enviar datos personales a un tercero y la decisión de selección debe ser humana.
