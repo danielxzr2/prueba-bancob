@@ -217,7 +217,7 @@ paths:
           description: Archivo PDF.
           headers:
             Content-Disposition:
-              description: '`attachment; filename="CV-<nombre>.pdf"`'
+              description: '`attachment; filename=CV-<nombre>.pdf` (nombre normalizado a [a-z0-9-])'
               schema:
                 type: string
           content:

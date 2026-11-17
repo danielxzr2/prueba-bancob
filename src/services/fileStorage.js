@@ -18,6 +18,19 @@ function createFileStorage(uploadsDir) {
     async remove(fileName) {
       await fs.rm(path.join(uploadsDir, fileName), { force: true });
     },
+
+    pathOf(fileName) {
+      return path.join(uploadsDir, fileName);
+    },
+
+    async exists(fileName) {
+      try {
+        await fs.access(path.join(uploadsDir, fileName));
+        return true;
+      } catch {
+        return false;
+      }
+    },
   };
 }
 

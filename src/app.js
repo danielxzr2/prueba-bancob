@@ -7,6 +7,7 @@ const OpenApiValidator = require('express-openapi-validator');
 const { notFound } = require('./errors');
 const { errorHandler } = require('./middleware/errorHandler');
 const { createApplicantRepository } = require('./repositories/applicantRepository');
+const { createStatusChangeRepository } = require('./repositories/statusChangeRepository');
 const { createFileStorage } = require('./services/fileStorage');
 const { createApplicantService } = require('./services/applicantService');
 const { createApplicantsRouter } = require('./routes/applicants');
@@ -75,6 +76,7 @@ function createApp({ db, config, logger = console }) {
   // Composition root: dependencies are wired here and injected into each layer.
   const applicantService = createApplicantService({
     applicantRepository: createApplicantRepository(db),
+    statusChangeRepository: createStatusChangeRepository(db),
     fileStorage: createFileStorage(config.uploadsDir),
   });
 
