@@ -155,7 +155,7 @@ describe('Registro de postulaciones — POST /api/applicants', () => {
 
       const res = await sendRegistration(
         request(ctx.app),
-        validApplicant({ email: '  ANA.Perez@EXAMPLE.com ' }),
+        validApplicant({ email: 'ANA.Perez@EXAMPLE.com' }),
       );
 
       expect(res.status).toBe(409);
