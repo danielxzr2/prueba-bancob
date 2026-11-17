@@ -12,6 +12,7 @@ uploads/
 *.sqlite
 *.sqlite3
 *.db
+data/
 
 # Cobertura y logs
 coverage/
