@@ -62,7 +62,10 @@
               {
                 type: 'button',
                 className: 'button link',
-                onClick: () => showDetail(applicant.id, { focus: true }),
+                onClick: () => {
+                  announce(''); // a message about another applicant would be misleading
+                  showDetail(applicant.id, { focus: true });
+                },
               },
               applicant.fullName,
             ),
@@ -146,7 +149,7 @@
         field('Carrera', applicant.career),
         field('Semestre', applicant.semester),
         field('Registro', formatDate(applicant.createdAt)),
-        field('Autorización de datos', formatDate(applicant.dataConsentAt)),
+        field('Autorización', formatDate(applicant.dataConsentAt)),
       ),
       h(
         'div',

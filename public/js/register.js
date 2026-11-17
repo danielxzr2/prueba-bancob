@@ -37,6 +37,8 @@
   function showStatus(message, kind = '') {
     statusBox.textContent = message;
     statusBox.className = `form-status ${kind}`.trim();
+    // On small screens the message can be below the fold: bring it into view.
+    if (kind === 'success') statusBox.scrollIntoView({ block: 'nearest' });
   }
 
   /** Maps an API error to field messages, so server errors also appear next to the field. */

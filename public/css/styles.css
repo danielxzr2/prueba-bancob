@@ -66,6 +66,12 @@ a {
   outline-offset: 2px;
 }
 
+/* Headings that receive focus programmatically (to guide screen readers) are not
+   interactive, so they do not need a focus ring. */
+[tabindex='-1']:focus {
+  outline: none;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
