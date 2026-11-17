@@ -1,0 +1,23 @@
+# Enunciado del reto (documento interno, no se versiona)
+/VPTDDSCD-*.pdf
+
+# Dependencias
+node_modules/
+
+# Configuración local y secretos (RNF-08)
+.env
+
+# Datos en tiempo de ejecución
+uploads/
+*.sqlite
+*.sqlite3
+*.db
+
+# Cobertura y logs
+coverage/
+*.log
+
+# Sistema operativo / editores
+.DS_Store
+.vscode/
+.idea/
