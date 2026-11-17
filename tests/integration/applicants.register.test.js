@@ -136,4 +136,79 @@ describe('Registro de postulaciones — POST /api/applicants', () => {
       expect(fields).toEqual(expect.arrayContaining(['fullName', 'email', 'semester']));
     });
   });
+
+  describe('RF-04 Correo único', () => {
+    it('CA-04.1 responde 409 si el correo ya está registrado y no guarda el archivo', async () => {
+      await sendRegistration(request(ctx.app));
+      const filesBefore = ctx.uploadedFiles();
+
+      const res = await sendRegistration(request(ctx.app));
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('DUPLICATE_EMAIL');
+      expect(countApplicants()).toBe(1);
+      expect(ctx.uploadedFiles()).toEqual(filesBefore);
+    });
+
+    it('CA-04.1 compara el correo sin distinguir mayúsculas y minúsculas', async () => {
+      await sendRegistration(request(ctx.app));
+
+      const res = await sendRegistration(
+        request(ctx.app),
+        validApplicant({ email: '  ANA.Perez@EXAMPLE.com ' }),
+      );
+
+      expect(res.status).toBe(409);
+      expect(countApplicants()).toBe(1);
+    });
+  });
+
+  describe('RNF-04 El tipo de archivo se verifica por su contenido', () => {
+    it.each([
+      ['un ejecutable renombrado a .pdf', Buffer.from('MZ\x90\x00\x03\x00\x00\x00')],
+      ['un archivo de texto renombrado a .pdf', Buffer.from('hola, esto no es un PDF')],
+      ['un archivo vacío', Buffer.alloc(0)],
+    ])('rechaza %s sin guardar nada', async (_case, content) => {
+      const res = await sendRegistration(request(ctx.app), validApplicant(), content, 'cv.pdf');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details).toContainEqual({
+        field: 'cv',
+        message: expect.stringMatching(/PDF/),
+      });
+      expect(countApplicants()).toBe(0);
+      expect(ctx.uploadedFiles()).toEqual([]);
+    });
+  });
+
+  describe('RNF-05 Tamaño máximo de la hoja de vida: 5 MB', () => {
+    const pdfOfSize = (bytes) => {
+      const buffer = Buffer.alloc(bytes, 0x20);
+      validPdf().copy(buffer);
+      return buffer;
+    };
+
+    it('acepta un archivo de exactamente 5 MB', async () => {
+      const res = await sendRegistration(
+        request(ctx.app),
+        validApplicant(),
+        pdfOfSize(5 * 1024 * 1024),
+      );
+
+      expect(res.status).toBe(201);
+    });
+
+    it('responde 413 a un archivo de 5 MB + 1 byte y no guarda nada', async () => {
+      const res = await sendRegistration(
+        request(ctx.app),
+        validApplicant(),
+        pdfOfSize(5 * 1024 * 1024 + 1),
+      );
+
+      expect(res.status).toBe(413);
+      expect(res.body.error.code).toBe('FILE_TOO_LARGE');
+      expect(countApplicants()).toBe(0);
+      expect(ctx.uploadedFiles()).toEqual([]);
+    });
+  });
 });
