@@ -73,9 +73,10 @@ describe('Registro de postulaciones — POST /api/applicants', () => {
       );
 
       expect(res.status).toBe(400);
-      expect(res.body.error.details).toContainEqual(
-        expect.objectContaining({ field: 'dataConsent' }),
-      );
+      expect(res.body.error.details).toContainEqual({
+        field: 'dataConsent',
+        message: expect.stringMatching(/autorización/),
+      });
       expect(countApplicants()).toBe(0);
       expect(ctx.uploadedFiles()).toEqual([]);
     });
@@ -92,21 +93,26 @@ describe('Registro de postulaciones — POST /api/applicants', () => {
 
   describe('RF-03 Validación en el servidor', () => {
     it.each([
-      ['nombre vacío', { fullName: '' }, 'fullName'],
-      ['nombre solo con espacios', { fullName: '     ' }, 'fullName'],
-      ['nombre muy largo', { fullName: 'a'.repeat(101) }, 'fullName'],
-      ['correo inválido', { email: 'no-es-un-correo' }, 'email'],
-      ['carrera faltante', { career: undefined }, 'career'],
-      ['semestre 0', { semester: '0' }, 'semester'],
-      ['semestre 13', { semester: '13' }, 'semester'],
-      ['semestre no numérico', { semester: 'séptimo' }, 'semester'],
-      ['semestre decimal', { semester: '7.5' }, 'semester'],
-    ])('CA-03.1 rechaza %s sin guardar nada', async (_case, override, field) => {
+      // The reason is asserted too, so a test cannot pass because of an unrelated error
+      // (e.g. a type error hiding a range check).
+      ['nombre vacío', { fullName: '' }, 'fullName', /corto|obligatorio/],
+      ['nombre solo con espacios', { fullName: '     ' }, 'fullName', /obligatorio/],
+      ['nombre muy largo', { fullName: 'a'.repeat(101) }, 'fullName', /largo/],
+      ['correo inválido', { email: 'no-es-un-correo' }, 'email', /formato/],
+      ['carrera faltante', { career: undefined }, 'career', /obligatorio/],
+      ['semestre 0', { semester: '0' }, 'semester', /mínimo/],
+      ['semestre 13', { semester: '13' }, 'semester', /máximo/],
+      ['semestre no numérico', { semester: 'séptimo' }, 'semester', /tipo/],
+      ['semestre decimal', { semester: '7.5' }, 'semester', /tipo/],
+    ])('CA-03.1 rechaza %s sin guardar nada', async (_case, override, field, reason) => {
       const res = await sendRegistration(request(ctx.app), validApplicant(override));
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details).toContainEqual(expect.objectContaining({ field }));
+      expect(res.body.error.details).toContainEqual({
+        field,
+        message: expect.stringMatching(reason),
+      });
       expect(countApplicants()).toBe(0);
       expect(ctx.uploadedFiles()).toEqual([]);
     });
