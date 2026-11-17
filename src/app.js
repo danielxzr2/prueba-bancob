@@ -1,6 +1,7 @@
 const path = require('node:path');
 const express = require('express');
 const multer = require('multer');
+const session = require('express-session');
 const OpenApiValidator = require('express-openapi-validator');
 
 const { notFound } = require('./errors');
@@ -9,6 +10,9 @@ const { createApplicantRepository } = require('./repositories/applicantRepositor
 const { createFileStorage } = require('./services/fileStorage');
 const { createApplicantService } = require('./services/applicantService');
 const { createApplicantsRouter } = require('./routes/applicants');
+const { createAnalystRepository } = require('./repositories/analystRepository');
+const { createAuthService } = require('./services/authService');
+const { createAuthRouter, SESSION_COOKIE } = require('./routes/auth');
 
 const OPENAPI_PATH = path.join(__dirname, '..', 'docs', 'openapi.yaml');
 
@@ -21,6 +25,25 @@ function createApp({ db, config, logger = console }) {
   app.disable('x-powered-by');
 
   app.use(express.json({ limit: '10kb' }));
+
+  // Analyst session (RF-05). The default in-memory store is enough for a single local
+  // process; sessions end when the server restarts.
+  app.use(
+    '/api',
+    session({
+      name: SESSION_COOKIE,
+      secret: config.sessionSecret,
+      resave: false,
+      saveUninitialized: false, // no cookie until login
+      cookie: {
+        httpOnly: true, // not readable from JavaScript (mitigates XSS session theft)
+        sameSite: 'strict', // not sent from other sites (mitigates CSRF)
+        // Runs locally over HTTP. Behind HTTPS this must be true.
+        secure: false,
+        maxAge: config.sessionMaxAgeMs,
+      },
+    }),
+  );
 
   // The contract is the source of truth (RNF-12): every /api request is validated
   // against docs/openapi.yaml before reaching the routes.
@@ -55,7 +78,13 @@ function createApp({ db, config, logger = console }) {
     fileStorage: createFileStorage(config.uploadsDir),
   });
 
+  const authService = createAuthService({
+    analystRepository: createAnalystRepository(db),
+    bcryptCost: config.bcryptCost,
+  });
+
   app.use('/api/applicants', createApplicantsRouter({ applicantService }));
+  app.use('/api/auth', createAuthRouter({ authService }));
 
   app.use((req, res, next) => next(notFound()));
   app.use(errorHandler({ logger }));

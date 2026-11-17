@@ -11,7 +11,8 @@ const { createApp } = require('../../src/app');
  */
 function createTestApp(overrides = {}) {
   const uploadsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prueba-bancob-uploads-'));
-  const config = { ...loadConfig({ NODE_ENV: 'test' }), uploadsDir, ...overrides };
+  // bcrypt cost 10 keeps tests fast while still meeting RNF-01 (>= 10).
+  const config = { ...loadConfig({ NODE_ENV: 'test' }), uploadsDir, bcryptCost: 10, ...overrides };
   const db = openDatabase(':memory:');
   const logger = { error: jest.fn(), warn: jest.fn(), info: jest.fn() };
   const app = createApp({ db, config, logger });

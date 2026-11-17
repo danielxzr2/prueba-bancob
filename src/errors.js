@@ -29,6 +29,9 @@ const notFound = (message = 'Recurso no encontrado.') => new AppError(404, 'NOT_
 const unauthorized = (message = 'Debe iniciar sesión como analista.') =>
   new AppError(401, 'UNAUTHORIZED', message);
 
+const invalidCredentials = () =>
+  new AppError(401, 'INVALID_CREDENTIALS', 'Usuario o contraseña incorrectos.');
+
 const duplicateEmail = () =>
   new AppError(409, 'DUPLICATE_EMAIL', 'Ya existe una postulación con este correo electrónico.');
 
@@ -39,6 +42,7 @@ module.exports = {
   validationError,
   notFound,
   unauthorized,
+  invalidCredentials,
   duplicateEmail,
   internalError,
 };
