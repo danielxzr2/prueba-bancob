@@ -1,7 +1,14 @@
 const fs = require('node:fs');
-const { loadConfig } = require('./config');
+const path = require('node:path');
+const { loadConfig, PROJECT_ROOT } = require('./config');
 const { openDatabase } = require('./db/database');
 const { createApp } = require('./app');
+
+// Optional local configuration (RNF-08). Loaded here and not in config.js, so tests never
+// read a developer's .env. Done in code because `node --watch --env-file-if-exists` crashes
+// in Node 22 when the file does not exist.
+const envFile = path.join(PROJECT_ROOT, '.env');
+if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
 
 const config = loadConfig();
 fs.mkdirSync(config.uploadsDir, { recursive: true });
