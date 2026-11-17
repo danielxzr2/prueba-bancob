@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Postulación a prácticas</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-row">
+        <p class="brand">Selección de Practicantes</p>
+        <a href="/login.html">Ingreso de analistas</a>
+      </div>
+    </header>
+
+    <main class="container narrow">
+      <h1>Postúlate al programa de prácticas</h1>
+      <p class="lead">
+        Completa el formulario y adjunta tu hoja de vida en PDF. Todos los campos son obligatorios.
+      </p>
+
+      <form id="registration-form" class="card" novalidate>
+        <div class="field">
+          <label for="fullName">Nombre completo</label>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            autocomplete="name"
+            maxlength="100"
+            required
+            aria-describedby="fullName-error"
+          />
+          <p class="field-error" id="fullName-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">Correo electrónico</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            maxlength="254"
+            required
+            aria-describedby="email-error"
+          />
+          <p class="field-error" id="email-error"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field grow">
+            <label for="career">Carrera universitaria</label>
+            <input
+              id="career"
+              name="career"
+              type="text"
+              maxlength="100"
+              required
+              aria-describedby="career-error"
+            />
+            <p class="field-error" id="career-error"></p>
+          </div>
+
+          <div class="field">
+            <label for="semester">Semestre actual</label>
+            <select id="semester" name="semester" required aria-describedby="semester-error">
+              <option value="">Selecciona</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+              <option>11</option>
+              <option>12</option>
+            </select>
+            <p class="field-error" id="semester-error"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="cv">Hoja de vida</label>
+          <input
+            id="cv"
+            name="cv"
+            type="file"
+            accept="application/pdf,.pdf"
+            required
+            aria-describedby="cv-hint cv-error"
+          />
+          <p class="field-hint" id="cv-hint">Archivo PDF de máximo 5 MB.</p>
+          <p class="field-error" id="cv-error"></p>
+        </div>
+
+        <div class="field checkbox">
+          <input
+            id="dataConsent"
+            name="dataConsent"
+            type="checkbox"
+            required
+            aria-describedby="dataConsent-error"
+          />
+          <label for="dataConsent">
+            Autorizo el tratamiento de mis datos personales, conforme a la Ley 1581 de 2012, con la
+            finalidad de evaluar mi postulación al programa de prácticas.
+          </label>
+          <p class="field-error" id="dataConsent-error"></p>
+        </div>
+
+        <button type="submit" class="button primary">Enviar postulación</button>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <script src="/js/validation.js" defer></script>
+    <script src="/js/api.js" defer></script>
+    <script src="/js/register.js" defer></script>
+  </body>
+</html>

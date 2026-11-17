@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel de analista</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <!-- "pending" hides the panel until the session is confirmed (see panel.js). -->
+  <body class="pending">
+    <header class="site-header">
+      <div class="container header-row">
+        <p class="brand">Selección de Practicantes · Panel</p>
+        <div class="session">
+          <span>Analista: <strong id="analyst-name"></strong></span>
+          <button id="logout-button" type="button" class="button secondary small">
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container panel-layout">
+      <section class="card panel-list" aria-labelledby="list-title">
+        <div class="panel-list-header">
+          <h1 id="list-title">Postulaciones</h1>
+          <div class="filter">
+            <label for="status-filter">Estado</label>
+            <select id="status-filter">
+              <option value="">Todos</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="VIABLE">Viable</option>
+              <option value="NO_VIABLE">No viable</option>
+            </select>
+          </div>
+        </div>
+
+        <p id="panel-status" class="form-status" role="status" aria-live="polite"></p>
+
+        <div class="table-wrapper">
+          <table class="applicants">
+            <caption class="visually-hidden">
+              Practicantes registrados, del más reciente al más antiguo. Selecciona un nombre para
+              ver el detalle.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Carrera</th>
+                <th scope="col" class="numeric">Semestre</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Registro</th>
+              </tr>
+            </thead>
+            <tbody id="applicants-body"></tbody>
+          </table>
+        </div>
+        <p id="applicants-empty" class="empty" hidden></p>
+      </section>
+
+      <section id="detail" class="card panel-detail" aria-label="Detalle del practicante">
+        <p class="empty">Selecciona un practicante para ver su información.</p>
+      </section>
+    </main>
+
+    <script src="/js/dom.js" defer></script>
+    <script src="/js/api.js" defer></script>
+    <script src="/js/panel.js" defer></script>
+  </body>
+</html>

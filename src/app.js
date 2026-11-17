@@ -6,6 +6,7 @@ const OpenApiValidator = require('express-openapi-validator');
 
 const { notFound } = require('./errors');
 const { errorHandler } = require('./middleware/errorHandler');
+const { securityHeaders } = require('./middleware/securityHeaders');
 const { createApplicantRepository } = require('./repositories/applicantRepository');
 const { createStatusChangeRepository } = require('./repositories/statusChangeRepository');
 const { createFileStorage } = require('./services/fileStorage');
@@ -16,6 +17,7 @@ const { createAuthService } = require('./services/authService');
 const { createAuthRouter, SESSION_COOKIE } = require('./routes/auth');
 
 const OPENAPI_PATH = path.join(__dirname, '..', 'docs', 'openapi.yaml');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 /**
  * Builds the Express application without starting the server, so tests can
@@ -24,6 +26,10 @@ const OPENAPI_PATH = path.join(__dirname, '..', 'docs', 'openapi.yaml');
 function createApp({ db, config, logger = console }) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(securityHeaders);
+
+  // Frontend (HTML, CSS, JS). The uploads folder lives elsewhere and is never served (RNF-03).
+  app.use(express.static(PUBLIC_DIR));
 
   app.use(express.json({ limit: '10kb' }));
 

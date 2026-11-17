@@ -21,6 +21,7 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "src/**/*.js",
+      "public/js/validation.js",
       "!src/server.js"
     ]
   },
