@@ -174,19 +174,23 @@ Cada requisito no funcional es **verificable**: se indica cómo se comprueba.
 
 Se completa durante el desarrollo. Cada fila enlaza el requisito con la prueba que lo verifica.
 
-| Requisito | Prueba(s) | Estado    |
-| --------- | --------- | --------- |
-| RF-01     | —         | Pendiente |
-| RF-02     | —         | Pendiente |
-| RF-03     | —         | Pendiente |
-| RF-04     | —         | Pendiente |
-| RF-05     | —         | Pendiente |
-| RF-06     | —         | Pendiente |
-| RF-07     | —         | Pendiente |
-| RF-08     | —         | Pendiente |
-| RF-09     | —         | Pendiente |
-| RF-10     | —         | Pendiente |
-| RNF-01…17 | —         | Pendiente |
+| Requisito                                 | Prueba(s)                                                                                                     | Estado    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------- |
+| RF-01                                     | `tests/integration/applicants.register.test.js` — CA-01.1, CA-01.2, CA-01.3                                   | Cumplido  |
+| RF-02                                     | —                                                                                                             | Pendiente |
+| RF-03                                     | `tests/integration/applicants.register.test.js` — CA-03.1 (9 casos + todos los campos a la vez)               | Cumplido  |
+| RF-04                                     | —                                                                                                             | Pendiente |
+| RF-05                                     | —                                                                                                             | Pendiente |
+| RF-06                                     | —                                                                                                             | Pendiente |
+| RF-07                                     | —                                                                                                             | Pendiente |
+| RF-08                                     | —                                                                                                             | Pendiente |
+| RF-09                                     | —                                                                                                             | Pendiente |
+| RF-10                                     | —                                                                                                             | Pendiente |
+| RNF-03                                    | `tests/integration/applicants.register.test.js` — CA-01.2 (nombre UUID); acceso autenticado pendiente (RF-09) | Parcial   |
+| RNF-09                                    | `tests/integration/applicants.register.test.js` — CA-01.3, RNF-09                                             | Cumplido  |
+| RNF-12                                    | `tests/integration/contract.test.js` + validación de respuestas en todas las pruebas                          | Cumplido  |
+| RNF-15                                    | `tests/unit/errorHandler.test.js`, `tests/integration/contract.test.js`                                       | Cumplido  |
+| RNF-01, 02, 04–08, 10, 11, 13, 14, 16, 17 | —                                                                                                             | Pendiente |
 
 ---
 
