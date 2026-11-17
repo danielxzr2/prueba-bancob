@@ -1,0 +1,114 @@
+# Plataforma de Selección de Practicantes
+
+[![CI](https://github.com/danielxzr2/prueba-bancob/actions/workflows/ci.yml/badge.svg)](https://github.com/danielxzr2/prueba-bancob/actions/workflows/ci.yml)
+
+Herramienta web para que **practicantes** registren su información y hoja de vida, y para que
+**analistas de selección** revisen cada postulación y la marquen como _viable_ o _no viable_.
+
+Construida con un enfoque **contract-first** y **TDD**: los requisitos y el contrato de la API se
+escriben antes del código, y cada requisito se verifica con pruebas automatizadas
+(ver [matriz de trazabilidad](docs/requisitos.md#6-matriz-de-trazabilidad)).
+
+## Estado
+
+| Funcionalidad                                            | Requisitos           | Estado      |
+| -------------------------------------------------------- | -------------------- | ----------- |
+| API de registro de postulaciones (validación, PDF, 5 MB) | RF-01, RF-03, RF-04  | Hecho       |
+| Inicio de sesión de analistas                            | RF-05                | En progreso |
+| API del panel: listar, detalle, decisión, descarga de CV | RF-06 a RF-10        | Pendiente   |
+| Frontend: formulario y panel                             | RF-02, RF-06 a RF-09 | Pendiente   |
+
+## Requisitos previos
+
+- **Node.js 22.9 o superior** (`node --version`)
+- **npm 10 o superior** (incluido con Node.js)
+
+No se necesita ninguna base de datos ni servicio externo: SQLite se crea automáticamente.
+
+> `better-sqlite3` descarga un binario precompilado para Windows, macOS y Linux. Solo en plataformas
+> poco comunes necesitaría compilarse (Python y un compilador de C++).
+
+## Instalación y ejecución
+
+```bash
+git clone https://github.com/danielxzr2/prueba-bancob.git
+cd prueba-bancob
+npm install
+npm run dev
+```
+
+El servidor queda disponible en **http://localhost:3000** y se reinicia solo al cambiar el código.
+Para ejecutarlo sin recarga automática: `npm start`.
+
+### Probar la API
+
+Registrar una postulación (reemplaza la ruta por la de un PDF real):
+
+```bash
+curl -X POST http://localhost:3000/api/applicants \
+  -F fullName="Ana María Pérez" \
+  -F email=ana.perez@example.com \
+  -F career="Ingeniería de Sistemas" \
+  -F semester=7 \
+  -F dataConsent=true \
+  -F cv=@/ruta/a/hoja-de-vida.pdf
+```
+
+Respuesta esperada (`201 Created`):
+
+```json
+{ "id": 1, "status": "PENDIENTE", "createdAt": "2026-11-17T03:00:00.000Z" }
+```
+
+Si algún dato es inválido, la API responde `400` con el detalle de **todos** los campos con error.
+La especificación completa de la API está en [`docs/openapi.yaml`](docs/openapi.yaml).
+
+## Pruebas y calidad
+
+```bash
+npm test               # pruebas unitarias y de integración (Jest + Supertest)
+npm run test:coverage  # pruebas + reporte de cobertura en coverage/lcov-report/index.html
+npm run lint           # ESLint
+npm run format:check   # verificar formato (Prettier); npm run format lo corrige
+```
+
+Las pruebas usan una base de datos en memoria y carpetas temporales: no tocan los datos locales.
+GitHub Actions ejecuta lint, formato y pruebas en cada push a `main`.
+
+## Configuración
+
+Todo funciona sin configuración. Para cambiar algún valor, copia `.env.example` como `.env`:
+
+| Variable        | Por defecto       | Descripción                                        |
+| --------------- | ----------------- | -------------------------------------------------- |
+| `PORT`          | `3000`            | Puerto del servidor                                |
+| `DATABASE_PATH` | `data/app.sqlite` | Archivo de la base de datos SQLite                 |
+| `UPLOADS_DIR`   | `uploads`         | Carpeta privada donde se guardan las hojas de vida |
+
+Para reiniciar los datos locales, detén el servidor y borra las carpetas `data/` y `uploads/`.
+
+## Estructura del proyecto
+
+```
+docs/
+  requisitos.md     Requisitos funcionales y no funcionales, criterios de aceptación y trazabilidad
+  openapi.yaml      Contrato de la API (el servidor valida cada petición y respuesta contra él)
+src/
+  app.js            Construcción de la app y conexión de dependencias
+  server.js         Punto de entrada
+  routes/           Capa HTTP
+  services/         Reglas de negocio y almacenamiento de archivos
+  repositories/     Acceso a datos (consultas parametrizadas)
+  db/               Esquema SQLite
+  middleware/       Manejo de errores
+tests/
+  unit/             Pruebas de servicios y utilidades
+  integration/      Pruebas de la API de extremo a extremo con Supertest
+CLAUDE.md           Reglas de trabajo para asistentes de IA en este repositorio
+```
+
+## Documentación
+
+- [Requisitos y criterios de aceptación](docs/requisitos.md)
+- [Contrato de la API (OpenAPI 3.0)](docs/openapi.yaml)
+- [Reglas para asistentes de IA](CLAUDE.md)

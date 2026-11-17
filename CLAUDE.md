@@ -24,6 +24,15 @@ No implementes nada que no esté trazado a un requisito. Si algo falta o es ambi
 
 Los nombres de las pruebas incluyen el ID: `describe('RF-04 Correo único', ...)`, `it('CA-04.1 responde 409 si el correo existe', ...)`.
 
+## Definición de Hecho
+
+Un requisito está **hecho** cuando:
+
+- Tiene pruebas automatizadas de cada criterio de aceptación, escritas antes de la implementación.
+- Pasa lint, formato y pruebas en CI.
+- La API cumple `docs/openapi.yaml` (la validación de respuestas no falla).
+- La matriz de trazabilidad y el `README.md` (estado, instrucciones de uso) están actualizados.
+
 ## Convenciones
 
 - Código, identificadores y nombres de archivos en inglés; documentación, mensajes de commit y textos de la interfaz en español.
