@@ -32,6 +32,22 @@ describe('RNF-15 Formato uniforme de errores', () => {
     expect(logger.error).toHaveBeenCalled();
   });
 
+  it('RNF-10 al registrar un error 500 no escribe en el log los datos personales de la petición', () => {
+    const logger = { error: jest.fn() };
+    const req = {
+      method: 'POST',
+      path: '/api/applicants',
+      body: { fullName: 'Ana María Pérez', email: 'ana.perez@example.com' },
+      session: { analyst: { username: 'analista' } },
+    };
+
+    errorHandler({ logger })(new Error('fallo inesperado'), req, fakeResponse());
+
+    const logged = logger.error.mock.calls.flat().map(String).join(' ');
+    expect(logged).toContain('POST /api/applicants');
+    expect(logged).not.toMatch(/Ana María|ana\.perez@example\.com/);
+  });
+
   it('traduce errores del validador de contrato a VALIDATION_ERROR con detalle por campo', () => {
     const err = {
       status: 400,
