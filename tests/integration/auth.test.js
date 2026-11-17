@@ -51,6 +51,19 @@ describe('RF-05 Iniciar y cerrar sesión', () => {
     });
   });
 
+  describe('Protección contra fijación de sesión (session fixation)', () => {
+    it('emite un id de sesión nuevo en cada inicio de sesión', async () => {
+      const sid = (res) =>
+        res.headers['set-cookie'].find((c) => c.startsWith('sid=')).split(';')[0];
+      const agent = request.agent(ctx.app);
+
+      const first = await login(agent);
+      const second = await login(agent);
+
+      expect(sid(second)).not.toBe(sid(first));
+    });
+  });
+
   describe('CA-05.2 Credenciales inválidas', () => {
     it('responde 401 con contraseña incorrecta', async () => {
       const res = await login(request(ctx.app), USERNAME, 'incorrecta');
@@ -79,6 +92,19 @@ describe('RF-05 Iniciar y cerrar sesión', () => {
 
       expect(logout.status).toBe(204);
       expect(me.status).toBe(401);
+    });
+
+    it('invalida la sesión en el servidor: la cookie anterior deja de servir', async () => {
+      // Borrar la cookie en el navegador no basta: si alguien la copió antes del
+      // logout, el servidor debe rechazarla.
+      const loginRes = await login(request(ctx.app));
+      const sessionCookie = loginRes.headers['set-cookie'].find((c) => c.startsWith('sid='));
+      const cookieValue = sessionCookie.split(';')[0];
+
+      await request(ctx.app).post('/api/auth/logout').set('Cookie', cookieValue);
+      const reused = await request(ctx.app).get('/api/auth/me').set('Cookie', cookieValue);
+
+      expect(reused.status).toBe(401);
     });
   });
 
