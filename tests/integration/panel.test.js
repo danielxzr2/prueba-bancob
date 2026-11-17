@@ -202,6 +202,20 @@ describe('Panel de analista — API', () => {
       ]);
     });
 
+    it('CA-10.1 registra al analista que tomó cada decisión, no a otro', async () => {
+      const id = await register();
+      await setStatus(id, 'VIABLE');
+      await seedAnalyst(ctx, { username: 'revisora', password: 'Otra-contraseña-456' });
+      const otherAgent = await loggedInAgent(ctx, {
+        username: 'revisora',
+        password: 'Otra-contraseña-456',
+      });
+
+      await otherAgent.put(`/api/applicants/${id}/status`).send({ status: 'NO_VIABLE' });
+
+      expect((await history(id)).body.map((c) => c.changedBy)).toEqual(['revisora', 'analista']);
+    });
+
     it('no registra nada si se marca el mismo estado que ya tiene (idempotente)', async () => {
       const id = await register();
       await setStatus(id, 'VIABLE');
@@ -239,7 +253,8 @@ describe('Panel de analista — API', () => {
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toMatch(/^application\/pdf/);
       expect(res.headers['content-disposition']).toMatch(
-        /^attachment; filename="CV-ana-maria-perez\.pdf"/,
+        // Quotes are optional in RFC 6266 when the name has no special characters.
+        /^attachment; filename="?CV-ana-maria-perez\.pdf"?$/,
       );
       expect(res.body).toEqual(validPdf());
     });

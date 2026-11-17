@@ -32,6 +32,16 @@ describe('RF-08/RF-10 La decisión y su registro de auditoría son atómicos', (
   });
 });
 
+describe('CA-08.2 El servicio valida la decisión aunque el contrato ya lo haga', () => {
+  it.each(['PENDIENTE', 'APROBADO'])('rechaza "%s" (defensa en profundidad)', (status) => {
+    const service = createApplicantService({ applicantRepository: {}, fileStorage: {} });
+
+    expect(() => service.changeStatus(1, status, { id: 1 })).toThrow(
+      expect.objectContaining({ status: 400, code: 'VALIDATION_ERROR' }),
+    );
+  });
+});
+
 describe('RF-09 Nombre del archivo de descarga', () => {
   it.each([
     ['Ana María Pérez', 'CV-ana-maria-perez.pdf'],
