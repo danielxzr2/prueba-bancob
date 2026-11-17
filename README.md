@@ -11,12 +11,12 @@ escriben antes del código, y cada requisito se verifica con pruebas automatizad
 
 ## Estado
 
-| Funcionalidad                                            | Requisitos           | Estado      |
-| -------------------------------------------------------- | -------------------- | ----------- |
-| API de registro de postulaciones (validación, PDF, 5 MB) | RF-01, RF-03, RF-04  | Hecho       |
-| Inicio y cierre de sesión de analistas                   | RF-05                | Hecho       |
-| API del panel: listar, detalle, decisión, descarga de CV | RF-06 a RF-10        | En progreso |
-| Frontend: formulario y panel                             | RF-02, RF-06 a RF-09 | Pendiente   |
+| Funcionalidad                                                               | Requisitos           | Estado    |
+| --------------------------------------------------------------------------- | -------------------- | --------- |
+| API de registro de postulaciones (validación, PDF, 5 MB)                    | RF-01, RF-03, RF-04  | Hecho     |
+| Inicio y cierre de sesión de analistas                                      | RF-05                | Hecho     |
+| API del panel: listar, filtrar, detalle, decisión, bitácora, descarga de CV | RF-06 a RF-11        | Hecho     |
+| Frontend: formulario y panel                                                | RF-02, RF-06 a RF-09 | Pendiente |
 
 ## Requisitos previos
 
@@ -80,8 +80,33 @@ curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
   -d '{"username": "analista", "password": "<contraseña del seed>"}'
 
 curl -b cookies.txt http://localhost:3000/api/auth/me      # {"username":"analista"}
+```
+
+Con la sesión iniciada, el panel del analista:
+
+```bash
+curl -b cookies.txt "http://localhost:3000/api/applicants?status=PENDIENTE"   # listar (filtro opcional)
+curl -b cookies.txt http://localhost:3000/api/applicants/1                    # detalle
+
+curl -b cookies.txt -X PUT http://localhost:3000/api/applicants/1/status \
+  -H "Content-Type: application/json" -d '{"status": "VIABLE"}'              # VIABLE o NO_VIABLE
+
+curl -b cookies.txt http://localhost:3000/api/applicants/1/status-history     # bitácora de decisiones
+curl -b cookies.txt -OJ http://localhost:3000/api/applicants/1/cv             # descarga CV-<nombre>.pdf
+
 curl -b cookies.txt -X POST http://localhost:3000/api/auth/logout
 ```
+
+| Método | Ruta                                   | Descripción                    | Sesión |
+| ------ | -------------------------------------- | ------------------------------ | ------ |
+| POST   | `/api/applicants`                      | Registrar postulación          | No     |
+| POST   | `/api/auth/login` · `/api/auth/logout` | Iniciar y cerrar sesión        | —      |
+| GET    | `/api/auth/me`                         | Sesión actual                  | Sí     |
+| GET    | `/api/applicants?status=`              | Listar practicantes            | Sí     |
+| GET    | `/api/applicants/{id}`                 | Detalle                        | Sí     |
+| PUT    | `/api/applicants/{id}/status`          | Marcar como viable o no viable | Sí     |
+| GET    | `/api/applicants/{id}/status-history`  | Bitácora de decisiones         | Sí     |
+| GET    | `/api/applicants/{id}/cv`              | Descargar hoja de vida         | Sí     |
 
 La especificación completa de la API está en [`docs/openapi.yaml`](docs/openapi.yaml).
 
