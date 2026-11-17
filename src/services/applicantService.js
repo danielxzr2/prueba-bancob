@@ -32,8 +32,8 @@ function cvDownloadName(fullName) {
 }
 
 const LIMITS = {
-  fullName: { min: 3, max: 100 },
-  career: { min: 2, max: 100 },
+  fullName: { min: 3, max: 100, label: 'El nombre completo', required: 'obligatorio' },
+  career: { min: 2, max: 100, label: 'La carrera', required: 'obligatoria' },
 };
 
 /**
@@ -51,10 +51,10 @@ function normalizeRegistration(input) {
   };
 }
 
-function checkLength(details, field, label, value) {
-  const { min, max } = LIMITS[field];
+function checkLength(details, field, value) {
+  const { min, max, label, required } = LIMITS[field];
   if (value.length === 0) {
-    details.push({ field, message: `${label} es obligatorio.` });
+    details.push({ field, message: `${label} es ${required}.` });
   } else if (value.length < min || value.length > max) {
     details.push({ field, message: `${label} debe tener entre ${min} y ${max} caracteres.` });
   }
@@ -67,8 +67,8 @@ function checkLength(details, field, label, value) {
  */
 function validateRegistration(data, cvFile) {
   const details = [];
-  checkLength(details, 'fullName', 'El nombre completo', data.fullName);
-  checkLength(details, 'career', 'La carrera', data.career);
+  checkLength(details, 'fullName', data.fullName);
+  checkLength(details, 'career', data.career);
   if (!data.dataConsent) {
     details.push({
       field: 'dataConsent',
