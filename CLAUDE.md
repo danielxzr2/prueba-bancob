@@ -11,7 +11,8 @@ Plataforma de selección de practicantes (reto técnico). Node.js + Express, SQL
 
 - `docs/requisitos.md` — requisitos funcionales y no funcionales con criterios de aceptación (RF-xx, RNF-xx, CA-xx.x).
 - `docs/openapi.yaml` — contrato de la API. Se modifica **antes** que las rutas.
-- `docs/adr/` — decisiones de arquitectura.
+- `docs/adr/` — decisiones de arquitectura (un ADR nuevo por cada decisión relevante).
+- `docs/arquitectura.md` — diagramas; actualizarlos si cambian las capas o el modelo de datos.
 
 No implementes nada que no esté trazado a un requisito. Si algo falta o es ambiguo, propón el cambio al documento primero.
 
@@ -53,8 +54,10 @@ Un requisito está **hecho** cuando:
 ```bash
 npm install          # instalar dependencias
 npm run dev          # servidor en http://localhost:3000 con recarga automática
+npm run seed         # crear o actualizar el analista de prueba
 npm test             # pruebas (Jest + Supertest)
 npm run test:coverage
+npm run test:e2e     # prueba de punta a punta en Firefox (-- --screenshots regenera docs/img)
 npm run lint         # ESLint
 npm run format       # Prettier
 ```
