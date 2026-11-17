@@ -25,3 +25,6 @@ coverage/
 
 # Cookies del ejemplo con curl del README
 cookies.txt
+
+# Notas personales (guion de la demo), no se versionan
+notas/
